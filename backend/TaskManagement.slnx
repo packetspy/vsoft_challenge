@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TaskManagement.Api/TaskManagement.Api.csproj" Id="b3b1c199-44e7-421d-be0b-a4046abed9c7" DisplayName="TaskManagement.Api" />
+    <Project Path="src/TaskManagement.Application/TaskManagement.Application.csproj" DisplayName="TaskManagement.Application" />
+    <Project Path="src/TaskManagement.Core/TaskManagement.Core.csproj" DisplayName="TaskManagement.Core" />
+    <Project Path="src/TaskManagement.Infrastructure/TaskManagement.Infrastructure.csproj" DisplayName="TaskManagement.Infrastructure" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
