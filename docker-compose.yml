@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: taskmanagement_postgres
+    environment:
+      POSTGRES_DB: TaskManagement
+      POSTGRES_USER: userTask
+      POSTGRES_PASSWORD: taskM4ster123
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256 --auth-local=scram-sha-256'
+    ports:
+      - '5444:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - taskmanagement_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d TaskManagement']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: taskmanagement_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '5445:5672' # AMQP protocol
+      - '15672:15672' # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - taskmanagement_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskmanagement_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Pooling=true;Database=TaskManagement;User Id=userTask;Password=taskM4ster123
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+      - RabbitMQ__Port=5672
+      - Jwt__Key=p4kY_j9mR-5sLz8vF-3gX2qB_1wA8cE_6hT_7pW9yP_4eG8hT_1dY0kC8sM
+      - Jwt__Issuer=TaskManagementApiIssuer
+      - Jwt__Audience=TaskManagementApiAudience
+      - DefaultPassword=default123
+    ports:
+      - '7000:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskmanagement_network
+    volumes:
+      - ./backend/logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskmanagement_frontend
+    ports:
+      - '3000:80'
+    depends_on:
+      - backend
+    networks:
+      - taskmanagement_network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  taskmanagement_network:
+    driver: bridge
